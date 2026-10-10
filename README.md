@@ -44,3 +44,10 @@ Auditing code that gates on file permissions tends to reinvent the same five-lin
 By default the checker inspects the link itself, not its target. A symlink carries `0o777` on POSIX, so `requires_permission_mask(link, MASK_OTHER_WRITABLE)` is `True` for a symlink whose target is locked down. If you want to audit the target, pass `follow_symlinks=True` — and note that a dangling symlink then raises `OSError`, which is intentional: a missing target is a caller bug, not a "mask satisfied" result.
 
 Bits outside the low-12 permission set (e.g. `S_IFREG`) passed in `required_mask` are silently stripped before evaluation. A mask of `0o100644` is treated as `0o644`; the file-type bits are not permissions and never count as "missing".
+
+## Design notes
+
+The window stores values eagerly rather than keeping running aggregates. Running
+sums drift with floating point over long streams, and recomputing from a small
+buffer is cheap enough that the drift is not worth the speed.
+
